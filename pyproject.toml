@@ -1,0 +1,25 @@
+[tool.poetry]
+name = "bank-analytics"
+version = "0.1.0"
+description = "Bank analytics application"
+authors = ["Your Name <your.email@example.com>"]
+package-mode = false  # Здесь правильно
+
+[tool.poetry.dependencies]
+python = "^3.10"
+pandas = "^2.0.0"
+python-dotenv = "^1.0.0"
+requests = "^2.31.0"
+openpyxl = "^3.1.5"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.0.0"
+pytest-cov = "^5.0.0"
+pytest-mock = "^3.12.0"
+black = "^24.0.0"
+isort = "^5.13.0"
+flake8 = "^7.0.0"
+mypy = "^1.8.0"
+types-requests = "^2.31.0"
+pandas-stubs = "^2.1.0"
+
