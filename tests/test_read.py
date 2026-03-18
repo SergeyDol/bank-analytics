@@ -3,7 +3,7 @@ import pandas as pd
 # Попробуем прочитать файл
 try:
     df = pd.read_excel('data/operations.xlsx')
-    print(f"Файл успешно прочитан!")
+    print("Файл успешно прочитан!")
     print(f"Количество строк: {len(df)}")
     print(f"Количество колонок: {len(df.columns)}")
     print(f"Названия колонок: {list(df.columns)}")
