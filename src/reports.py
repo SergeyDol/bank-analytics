@@ -1,97 +1,95 @@
 import json
 from datetime import datetime, timedelta
-from typing import Optional
+from functools import wraps
+from typing import Any, Callable, Optional
+
 import pandas as pd
-import logging
-from src.utils import read_excel_file
+
 from src.logger_config import setup_logger
 
 logger = setup_logger("reports", "reports.log")
 
 
-def spending_by_category(category: str, date: Optional[str] = None) -> str:
+def report_decorator(filename: Optional[str] = None) -> Callable:
     """
-    Отчет о тратах по категории за последние 3 месяца.
+    Декоратор для записи результатов отчетов в файл.
 
     Args:
+        filename: Имя файла для записи (по умолчанию report_YYYY-MM-DD_HH-MM-SS.json)
+    """
+
+    def decorator(func: Callable) -> Callable:
+        @wraps(func)
+        def wrapper(*args: Any, **kwargs: Any) -> Any:
+            result = func(*args, **kwargs)
+
+            # Определяем имя файла
+            if filename is None:
+                file_name = f"report_{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.json"
+            else:
+                file_name = filename
+
+            # Записываем результат в файл
+            try:
+                if isinstance(result, pd.DataFrame):
+                    result.to_json(file_name, orient='records', force_ascii=False, indent=2)
+                else:
+                    with open(file_name, 'w', encoding='utf-8') as f:
+                        json.dump(result, f, ensure_ascii=False, indent=2)
+
+                logger.info(f"Результат отчета сохранен в файл: {file_name}")
+            except Exception as e:
+                logger.error(f"Ошибка при сохранении отчета: {e}")
+
+            return result
+
+        return wrapper
+
+    return decorator
+
+
+@report_decorator()
+def spending_by_category(transactions: pd.DataFrame, category: str, date: Optional[str] = None) -> pd.DataFrame:
+    """
+    Возвращает траты по заданной категории за последние три месяца.
+
+    Args:
+        transactions: DataFrame с транзакциями
         category: Название категории
-        date: Дата отсчета (если None, используется текущая)
+        date: Дата отсчета (по умолчанию текущая)
 
     Returns:
-        JSON-строка с отчетом
+        DataFrame с тратами по категории
     """
     try:
-        # Определяем дату отсчета
-        if date:
-            end_date = pd.to_datetime(date, format='%d.%m.%Y')
+        # Если дата не передана, используем текущую
+        if date is None:
+            target_date = datetime.now()
         else:
-            end_date = datetime.now()
+            target_date = datetime.strptime(date, "%Y-%m-%d")
 
-        # Начало периода (3 месяца назад)
-        start_date = end_date - timedelta(days=90)
+        # Вычисляем дату три месяца назад
+        three_months_ago = target_date - timedelta(days=90)
 
-        # Читаем данные
-        df = read_excel_file('data/operations.xlsx')
-        if df.empty:
-            return json.dumps({"error": "Не удалось загрузить данные"}, ensure_ascii=False)
-
-        # Преобразуем даты
-        df['date_dt'] = pd.to_datetime(df['Дата операции'], format='%d.%m.%Y %H:%M:%S')
-
-        # Фильтруем по дате и категории, берем только расходы
-        mask = (
-                (df['date_dt'] >= start_date) &
-                (df['date_dt'] <= end_date) &
-                (df['Категория'] == category) &
-                (df['Сумма операции'] < 0)
+        # Преобразуем даты операций
+        transactions['date_dt'] = pd.to_datetime(
+            transactions['Дата операции'],
+            format='%d.%m.%Y %H:%M:%S'
         )
 
-        filtered_df = df[mask]
+        # Фильтруем по дате и категории
+        mask = (
+                (transactions['date_dt'] >= three_months_ago) &
+                (transactions['date_dt'] <= target_date) &
+                (transactions['Категория'] == category) &
+                (transactions['Сумма операции'] < 0)  # Только расходы
+        )
 
-        # Рассчитываем статистику
-        if len(filtered_df) > 0:
-            total_spent = abs(filtered_df['Сумма операции'].sum())
-            transactions_count = len(filtered_df)
-            avg_spent = total_spent / transactions_count
+        result = transactions[mask].copy()
+        logger.info(f"Найдено {len(result)} транзакций по категории '{category}' за последние 3 месяца")
 
-            # Формируем результат
-            result = {
-                "category": category,
-                "period": {
-                    "from": start_date.strftime('%d.%m.%Y'),
-                    "to": end_date.strftime('%d.%m.%Y')
-                },
-                "total_spent": round(total_spent, 2),
-                "transactions_count": transactions_count,
-                "average_spent": round(avg_spent, 2),
-                "transactions": []
-            }
-
-            # Добавляем топ-10 транзакций
-            top_transactions = filtered_df.nlargest(10, 'Сумма операции')
-            for _, row in top_transactions.iterrows():
-                result["transactions"].append({
-                    "date": row['Дата операции'],
-                    "amount": abs(row['Сумма операции']),
-                    "description": row['Описание'] if pd.notna(row['Описание']) else ""
-                })
-        else:
-            result = {
-                "category": category,
-                "period": {
-                    "from": start_date.strftime('%d.%m.%Y'),
-                    "to": end_date.strftime('%d.%m.%Y')
-                },
-                "total_spent": 0,
-                "transactions_count": 0,
-                "average_spent": 0,
-                "transactions": []
-            }
-
-        logger.info(
-            f"Отчет по категории '{category}' - всего {result['transactions_count']} транзакций на сумму {result['total_spent']:.2f}")
-        return json.dumps(result, ensure_ascii=False, indent=2, default=str)
+        return result[['Дата операции', 'Сумма операции', 'Категория', 'Описание']]
 
     except Exception as e:
         logger.error(f"Ошибка в spending_by_category: {e}")
-        return json.dumps({"error": str(e)}, ensure_ascii=False)
+        return pd.DataFrame()
