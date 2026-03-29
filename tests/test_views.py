@@ -1,6 +1,8 @@
-import pytest
 import json
-from unittest.mock import patch, Mock
+from unittest.mock import Mock, patch
+
+import pytest
+
 from src.views import main_page
 
 

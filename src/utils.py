@@ -1,7 +1,7 @@
 import json
 import os
 from datetime import datetime
-from typing import List, Dict, Any
+from typing import Any, Dict, List
 
 import pandas as pd
 import requests

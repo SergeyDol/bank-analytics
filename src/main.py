@@ -41,7 +41,7 @@ def demonstrate_services():
     print("=" * 50)
 
     # Загружаем транзакции
-    df = read_excel_file('data/operations.xlsx')
+    df = read_excel_file('./data/operations.xlsx')
     if df.empty:
         print("Не удалось загрузить данные")
         return
@@ -65,7 +65,7 @@ def demonstrate_reports():
     print("=" * 50)
 
     # Загружаем транзакции
-    df = read_excel_file('data/operations.xlsx')
+    df = read_excel_file('./data/operations.xlsx')
     if df.empty:
         print("Не удалось загрузить данные")
         return

@@ -1,8 +1,10 @@
-import pytest
-import pandas as pd
 from datetime import datetime
 from unittest.mock import patch
-from src.reports import spending_by_category, report_decorator
+
+import pandas as pd
+import pytest
+
+from src.reports import report_decorator, spending_by_category
 
 
 class TestReports:

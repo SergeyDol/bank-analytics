@@ -21,7 +21,7 @@ def main_page(date_str: str) -> str:
         JSON-строка с данными для отображения
     """
     try:
-        df = read_excel_file('data/operations.xlsx')
+        df = read_excel_file('./data/operations.xlsx')
         if df.empty:
             return json.dumps({"error": "Не удалось загрузить данные"}, ensure_ascii=False)
 
