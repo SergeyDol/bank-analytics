@@ -1,12 +1,16 @@
-from datetime import datetime
 from unittest.mock import Mock, patch
 
 import pandas as pd
 import pytest
 
-from src.utils import (calculate_card_stats, get_exchange_rates, get_greeting,
-                       get_stock_prices, get_top_transactions,
-                       get_user_settings)
+from src.utils import (
+    calculate_card_stats,
+    get_exchange_rates,
+    get_greeting,
+    get_stock_prices,
+    get_top_transactions,
+    get_user_settings,
+)
 
 
 class TestUtils:

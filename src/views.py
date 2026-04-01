@@ -2,10 +2,16 @@ import json
 from datetime import datetime
 
 from src.logger_config import setup_logger
-from src.utils import (calculate_card_stats, filter_by_date_range,
-                       get_exchange_rates, get_greeting, get_stock_prices,
-                       get_top_transactions, get_user_settings,
-                       read_excel_file)
+from src.utils import (
+    calculate_card_stats,
+    filter_by_date_range,
+    get_exchange_rates,
+    get_greeting,
+    get_stock_prices,
+    get_top_transactions,
+    get_user_settings,
+    read_excel_file,
+)
 
 logger = setup_logger("views", "views.log")
 
@@ -21,7 +27,7 @@ def main_page(date_str: str) -> str:
         JSON-строка с данными для отображения
     """
     try:
-        df = read_excel_file('./data/operations.xlsx')
+        df = read_excel_file('../data/operations.xlsx')
         if df.empty:
             return json.dumps({"error": "Не удалось загрузить данные"}, ensure_ascii=False)
 
